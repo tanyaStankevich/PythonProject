@@ -7,13 +7,14 @@ from telegram import Update, Bot, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
 from bottoken import bot_token
 
+# import datetime from datetime
 bot = Bot(bot_token)
 updater = Updater(bot_token, use_context=True)
 dispatcher = updater.dispatcher
 
 
 def start(update, context):
-    context.bot.send_message(update.effective_chat.id, 'Что Вы хотите сделать:\n /view - Просмотреть расписание \n /add - Добавить событие \n /del - Удалить событие \n/change - Изменить событие')
+    context.bot.send_message(update.effective_chat.id, 'Что Вы хотите сделать:\n /view - Просмотреть расписание \n /add - Добавить событие \n /del - Удалить событие \n/change - Изменить событие \n /time_control - Просмотреть события с дедлайном через 3 дня')
     # keyboard = [
     #     [InlineKeyboardButton('Просмотреть расписание', callback_data='1'), InlineKeyboardButton('Добавить событие', callback_data='2')],
     #     [InlineKeyboardButton('Удалить событие', callback_data='3'), InlineKeyboardButton('Изменить событие', callback_data='4')]
@@ -39,9 +40,9 @@ def add_message(update, context):
         events = open('events.txt', 'a')
         event = str(update.message.text)
         event_write = event.split(' - ')
-        # i = 1
+
         if len(event_write):
-            events.write(event_write[1])
+            events.write(str(update.effective_chat.id) + ' ' + event_write[1])
         events.write('\n')
         context.bot.send_message(update.effective_chat.id, 'Событие добавлено в Вашу записную книжку')
         events.close()
@@ -57,11 +58,11 @@ def add_message(update, context):
 
         while line != '':
             line1 = line.split(' ')
-            if line1[0] == del_event:
+            if line1[1] == del_event:
                 new_events.write('')
                 print(line1[0])
                 # break
-            if line1[0] != del_event:
+            if line1[1] != del_event:
                 new_events.write(line)
                 # break
             line = events.readline()
@@ -92,11 +93,11 @@ def add_message(update, context):
 
         while line != '':
             line1 = line.split(' ')
-            if line1[0] == change_event:
+            if line1[1] == change_event:
                 new_events.write(change_event + ' ' + change_event_add + '\n')
                 print(line1[0])
                 # break
-            if line1[0] != change_event:
+            if line1[1] != change_event:
                 new_events.write(line)
                 print('error')
                 # break
@@ -117,7 +118,7 @@ def add_message(update, context):
         context.bot.send_message(update.effective_chat.id, 'Событие обновлено')
 
 def add(update, context):
-    context.bot.send_message(update.effective_chat.id, 'Введите: add - название события (1 слово) дедлайн описание (по желанию). Например (соблюдения формата обязательно): add - отчетГД 11.01.2023 Подготовить таблицу')
+    context.bot.send_message(update.effective_chat.id, 'Введите: add - название события описание (по желанию) дедлайн. Например (соблюдения формата обязательно): add - ОтчетГД Подготовить таблицу 11.01.2023')
 
 
 def del_(update, context):
@@ -129,15 +130,20 @@ def del_(update, context):
     #
     # schedule.close()
 
-    context.bot.send_message(update.effective_chat.id, 'Введите название записи, которую нужно удалить в формате: del - отчетГД')
+    context.bot.send_message(update.effective_chat.id, 'Введите название записи, которую нужно удалить в формате: del - отчетГД. Например, del - 939009870')
 
 
 def change(update, context):
     context.bot.send_message(update.effective_chat.id, 'Введите название записи, которую нужно изменить в формате: change - отчетГД - 14.02.2023 Подготовить презентацию')
 
+def time_control(update, context):
+
+    context.bot.send_message(update.effective_chat.id,
+                             'Через 3 дня наступит дедлайн по событиям: ')
+
 
 def unknown(update, context):
-    context.bot.send_message(update.effective_chat.id, 'Я не могу выполнить эту команду. Выберите команды из списка:\n /view \n /add \n /del \n /change \n')
+    context.bot.send_message(update.effective_chat.id, 'Я не могу выполнить эту команду. Выберите команды из списка:\n /view \n /add \n /del \n /change \n /time_control - Просмотреть события с дедлайном через 3 дня')
     # update.effective_chat.id('Я не могу выполнить эту команду. Выберите команды из списка: /view \n /add \n /del \n /change \n')
 # def button(update, context):
 #     query = update.callback_query
@@ -172,6 +178,9 @@ dispatcher.add_handler(del_handler)
 
 change_handler = CommandHandler('change', change)
 dispatcher.add_handler(change_handler)
+
+time_control_handler = CommandHandler('time_control', time_control)
+dispatcher.add_handler(time_control_handler)
 
 unknown_handler = MessageHandler(Filters.command, unknown)
 dispatcher.add_handler(unknown_handler)
